@@ -1,0 +1,11 @@
+#include <stdio.h> 
+
+int increasewithone(int* integervalue); 
+
+int main() {
+	int x = 0;
+	x.increasewithone();
+	return 0;
+}
+
+//68
