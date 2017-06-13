@@ -3,6 +3,10 @@
 #include <string.h>
 #include "functions.h"
 
+void faultcheck (void) {
+    printf("Still no fault\n");
+}
+
 int main(int argc, char * argv[]){
     /***opening up sourcefile***/
     int ch,i;
@@ -18,10 +22,11 @@ int main(int argc, char * argv[]){
         ch = fgetc(sourcefile);
         sfcharcount++;
     }
+    fseek(sourcefile,0,SEEK_SET);
     /***allocate memory dynamically on the heap for the buffer***/
     char * buffer = malloc(sfcharcount*sizeof(char));
-    fclose(sourcefile);
-    sourcefile = fopen(argv[1],"r");
+    //fclose(sourcefile);
+    //sourcefile = fopen(argv[1],"r");
     i = 0;
     /***reading file into the buffer***/
     do {
@@ -32,9 +37,8 @@ int main(int argc, char * argv[]){
     } while (ch != EOF);
     buffer[i-1] = 0;
     /***printing out just for testing***/
-    //printf("%s\n",buffer);
     //printf("%d\n",buffer[i-1]);
-    fclose(sourcefile);
+    //fclose(sourcefile);
     /***creating temporary file for gcc***/
     FILE * temporaryc = fopen("temporary.c","wb");
     unsigned int outputsize = i-1; //***declaring size of output***
@@ -49,25 +53,11 @@ int main(int argc, char * argv[]){
     Modifications of buffer start (pay attention on outputsize!!)
     
     ***/
-
-
-    int cica = searchargumentbycount_index (buffer,"increasewith",1,0);
-    int adlak = searchargumentbytype_index (buffer, "increasewith","int*");
-    //printf("%d\n",cica);
-    //printf("%d\n",adlak);
-    int cicabackup = cica;
-    int adlakbackup = adlak;
-    while (cica <= (cicabackup + strlen("int*"))){
-        printf("%c",buffer[cica]);
-        cica++;
-    }
-    printf("\n");
-    while (adlak <= (adlakbackup + strlen("int*"))) {
-        printf("%c",buffer[adlak]);
-        adlak++;
-    }
-    printf("\n");
-    
+    int index = findrelativefunctioncall(buffer,"cica",0);
+    int check = replaceline(&buffer,index,"increasewithone(&cica)");
+    if (check) return 1;
+    printf("%s\n",buffer);
+    printf("%d\n",index);
     
     /***
     
@@ -79,16 +69,21 @@ int main(int argc, char * argv[]){
     fwrite(buffer,sizeof(char),outputsize,temporaryc);
     /***closing temporary.c***/
     fclose(temporaryc);
+    if (buffer == NULL) {
+        printf("hiba\n");
+        return 1;
+    }
     /***freeing up buffer***/
     free(buffer);
     /***running gcc***/
     system("sh compile.sh");
     /***remove temporary.c***/
-    int removefail = remove("temporary.c");
+    /*int removefail = remove("temporary.c");
     if (removefail) {
         printf("Unable to remove temporary file\n");
         return 1;
-    }
+    }*/
     //printf("%s\n",argv[1]);
+    fclose(sourcefile);
     return 0;
 }

@@ -1,10 +1,14 @@
 #include <stdio.h> 
 
-int increasewithone(int* integervalue); 
+int increasewithone(int* integervalue){
+	(*integervalue)++;
+	return 0;
+} 
 
 int main() {
-	int x = 0;
-	x.increasewithone();
+	int cica = 0;
+	cica.increasewithone();
+	printf("%d\n",cica);
 	return 0;
 }
 

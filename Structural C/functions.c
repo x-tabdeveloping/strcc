@@ -106,14 +106,14 @@ int replaceintext(char **text, const char * replacewith,  int beginindex, int en
     return 0;
 }
 
-int replaceline (char ** text,int line,const char * replacewith){
-    int beginindex = getlineindex(*text,line);
-    int endindex = getlineindex(*text,line+1);
-    printf("%d\n",beginindex);
-    printf("%d\n",endindex);
-    int check = replaceintext(text,replacewith,beginindex,endindex);
+int replaceline (char ** text,int index,const char * replacewith){
+    int count = index;
+    while ((count <= strlen(*text)) && ((*text)[count] != ';')) count++;
+    /*printf("%d\n",beginindex);
+    printf("%d\n",endindex);*/
+    int check = replaceintext(text,replacewith,index,count);
     if (check == -1) return check;
-    check = removewhitespace(text);
+    //check = removewhitespace(text);
     return check;
 }
 
@@ -127,6 +127,25 @@ int replaceline (char ** text,int line,const char * replacewith){
     if (index == -1) return index;
 
 }*/
+
+// Returns dynamically allocated string don't forget to free!!
+
+char * getarguments (const char * text, const char * function) {
+    int funcindex = searchfromto(text,function,0,strlen(text));
+    int indexfrom = funcindex;
+    while ((text[indexfrom] != '(') && (indexfrom<=strlen(text))) indexfrom++;
+    indexfrom++;
+    int indexto = indexfrom;
+    while ((text[indexto] != ')') && (indexto<=strlen(text))) indexto++;
+    indexto--;
+    int length = (indexto-indexfrom)*sizeof(char)+1;
+    char * value = malloc(length);
+    strncpy(value,text+indexfrom,length);
+    value[length] = 0;
+    removewhitespace(&value);
+    //removespace(&value);
+    return value;
+}
 
 int searchargumentbytype_index (const char * text, const char * function,const char * type) {
     int funcindex = searchfromto(text,function,0,strlen(text));
@@ -152,21 +171,28 @@ int searchargumentbytype_count (const char * text, const char * function,const c
     return count;
 }
 
+
+
 int searchargumentbycount_index (const char * text,const char * function, int argument,int searchfrom){
     int funcindex = searchfromto(text,function,searchfrom,strlen(text));
     searchfrom = funcindex;
     while ((text[searchfrom] != '(') && (searchfrom<=strlen(text))) searchfrom++;
+    searchfrom++;
     int searchto = searchfrom;
     while ((text[searchto] != ')') && (searchto<=strlen(text))) searchto++;
+    searchto--;
     if ((searchfrom == strlen(text)) || (searchto == strlen(text))) return -1;
     int count = 1;
-    while ((count <= argument) && (searchfrom <= searchto)) {
-        if (text [searchfrom] == ',') count++;
-        searchfrom++;
+    if (count == argument) return searchfrom;
+    while ((count < argument) && (searchfrom <= searchto)) {
+        /*if (text [searchfrom] == ',') count++;*/
+        while (text[searchfrom] != ',') searchfrom++;
+        count++;
     }
     if (searchfrom == searchto) return -1;
+    searchfrom++;
     return searchfrom;
-    
+
 }
 
 int replaceargumentbycount (char ** text, const char * function, int argument) {
@@ -177,7 +203,7 @@ int removewhitespace (char ** text) { //remove whitespace function
     int length = 0;
     for (int i = 0; i<=strlen(*text);i++) {
         if (/*(*text[i] != ' ') &&*/ ((*text)[i] != 9) && ((*text)[i] != 10)) length++;
-    }    
+    }
     char * value = malloc(length*(sizeof(char)+1));
     if (value == NULL) {
         return -1;
@@ -254,5 +280,37 @@ int writetype (const char * text,const char * object) {
         }
     printf("%s\n",towrite);
     free(towrite);
+}
+
+char * addstring (const char * text, char * addition) {
+    int length = (strlen(text) + strlen(addition) + 1);
+    char * value = malloc(length*sizeof(char));
+    if (value == NULL) {
+        return value;
+    }
+    strcpy(value,text);
+    strcat(value,addition);
+    value[length] = 0;
+    return value;
+}
+int findrelativefunctioncall (const char * text, const char * object, int searchfrom) {
+    char * workwith = addstring(object,".");
+     int index = searchfromto(text,workwith,searchfrom,strlen(text));
+    free(workwith);
+    return index;
+}
+
+char * getlinebyindex(const char * text, int index) {
+    int count = index;
+    while ((count <= strlen(text)) && (text[count] != ';')) count++;
+    /*for (count = index; count < strlen(text); count++) {
+        if (text[count] == ';') break;
+    }*/
+    int length = count - index + 2;
+    //printf("%d\n",count);
+    char * value = malloc(length*sizeof(char));
+    strncpy(value,text+index,length-1);
+    value[length-1] = 0;
+    return value;
 }
 

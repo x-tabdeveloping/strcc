@@ -16,4 +16,9 @@ int searchargumentbytype_index (const char * text, const char * function,const c
 int searchfromto (const char * text,const char * object, int searchfrom, int searchto);
 int searchargumentbytype_count (const char * text, const char * function,const char * type);
 int searchargumentbycount_index (const char * text,const char * function, int argument, int searchfrom);
+char * getarguments (const char * text, const char * function);
+char * addstring (const char * text, char * addition);
+int findrelativefunctioncall (const char * text, const char * object, int searchfrom);
+char * getlinebyindex(const char * text, int index);
+
 #endif
