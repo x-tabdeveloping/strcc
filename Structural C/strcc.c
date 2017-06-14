@@ -53,11 +53,15 @@ int main(int argc, char * argv[]){
     Modifications of buffer start (pay attention on outputsize!!)
     
     ***/
+    removewhitespacefrom(&buffer,findendingofdefinition(buffer));
     int index = findrelativefunctioncall(buffer,"cica",0);
-    int check = replaceline(&buffer,index,"increasewithone(&cica)");
-    if (check) return 1;
-    printf("%s\n",buffer);
-    printf("%d\n",index);
+    index = getlineindex(buffer,index);
+    char * line = getlinebyindex(buffer,index);
+    passargumentinline(&line,"bab",2);
+    printf("%s\n",line);
+    printf("%d\n",strlen("cica.increasewithone(bab,kenyerbabkenyer);"));
+    printf("%d\n",strlen(line));
+    free(line);
     
     /***
     
@@ -78,11 +82,11 @@ int main(int argc, char * argv[]){
     /***running gcc***/
     system("sh compile.sh");
     /***remove temporary.c***/
-    /*int removefail = remove("temporary.c");
+    int removefail = remove("temporary.c");
     if (removefail) {
         printf("Unable to remove temporary file\n");
         return 1;
-    }*/
+    }
     //printf("%s\n",argv[1]);
     fclose(sourcefile);
     return 0;

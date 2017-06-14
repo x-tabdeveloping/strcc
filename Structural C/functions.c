@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 int searchinstring (const char * search,const char * base, int searchfrom) {
     int count = 0;
     int countbase = searchfrom;
@@ -50,7 +51,7 @@ int getlinescount (const char * text) {
     return count;
 }
 
-int getlineindex (const char * text, int line){
+/*int getlineindex (const char * text, int line){
     int i = 0;
     int count = 0;
     line--;
@@ -59,7 +60,7 @@ int getlineindex (const char * text, int line){
         if ((count-1) == line) {return (i);}
         i++;
     }
-}
+}*/
 
 int countlinelength (const char * text, int line) {
     int index = getlineindex(text,line);
@@ -147,6 +148,16 @@ char * getarguments (const char * text, const char * function) {
     return value;
 }
 
+int getarguments_amount (const char * text, const char * function) {
+    char * temporary = getarguments(text,function);
+    int count = 1;
+    for (int i = 0; i <= strlen(temporary);i++) {
+        if (temporary[i] == ',') count++;
+    }
+    free(temporary);
+    return count;
+}
+
 int searchargumentbytype_index (const char * text, const char * function,const char * type) {
     int funcindex = searchfromto(text,function,0,strlen(text));
     int searchfrom = funcindex;
@@ -206,10 +217,37 @@ int removewhitespace (char ** text) { //remove whitespace function
     }
     char * value = malloc(length*(sizeof(char)+1));
     if (value == NULL) {
-        return -1;
+        printf("malloc failed\n");
+        exit(-1);
     }
     int count = 0;
     for (int i = 0; i<=strlen(*text);i++) {
+        if (/*(*text[i] != ' ') && */((*text)[i] != 9) && ((*text)[i] != 10)) {
+            value[count] = (*text)[i];
+            count++;
+        }
+    }
+    value[count] = 0;
+    free(*text);
+    *text = value;
+    return 0;
+}
+
+int removewhitespacefrom(char ** text, int removefrom) {
+    int length = removefrom;
+    for (int i = removefrom; i<=strlen(*text);i++) {
+        if (/*(*text[i] != ' ') &&*/ ((*text)[i] != 9) && ((*text)[i] != 10)) length++;
+    }
+    char * value = malloc(length*(sizeof(char)+1));
+    if (value == NULL) {
+        printf("malloc failed\n");
+        exit(-1);
+    }
+    int count /*= 0*/;
+    for (count = 0; count<=removefrom; count++) {
+        value[count] = (*text)[count];
+    }
+    for (int i = removefrom; i<=strlen(*text);i++) {
         if (/*(*text[i] != ' ') && */((*text)[i] != 9) && ((*text)[i] != 10)) {
             value[count] = (*text)[i];
             count++;
@@ -255,10 +293,11 @@ char * findouttype (const char * text, const char * object) {
     while ((text[i] == ' ') || (text[i] == 9) || (text[i] == 10)) {
         i--;
     }
-    while ((text[i] != ' ') && (text[i] != 9) && (text[i] != 10)) {
+    while ((text[i] != ';') && (text[i] != '{')) {
         i--;
     }
-    char * type = malloc((newindex - i + 1)*sizeof(char));
+    i++;
+    char * type = malloc((newindex - i /*+ 1*/)*sizeof(char));
     int count = 0;
     while (i<=newindex) {
         type[count] = text [i];
@@ -282,7 +321,7 @@ int writetype (const char * text,const char * object) {
     free(towrite);
 }
 
-char * addstring (const char * text, char * addition) {
+char * addstring (const char * text, const char * addition) {
     int length = (strlen(text) + strlen(addition) + 1);
     char * value = malloc(length*sizeof(char));
     if (value == NULL) {
@@ -300,6 +339,15 @@ int findrelativefunctioncall (const char * text, const char * object, int search
     return index;
 }
 
+int findrelativefunctioncall_by_function (const char * text, const char * object, const char * function, int searchfrom) {
+    char * temporary = addstring(object,".");
+    char * workwith = addstring(temporary,function);
+    free(temporary);
+     int index = searchfromto(text,workwith,searchfrom,strlen(text));
+    free(workwith);
+    return index;
+}
+
 char * getlinebyindex(const char * text, int index) {
     int count = index;
     while ((count <= strlen(text)) && (text[count] != ';')) count++;
@@ -309,8 +357,128 @@ char * getlinebyindex(const char * text, int index) {
     int length = count - index + 2;
     //printf("%d\n",count);
     char * value = malloc(length*sizeof(char));
+    if (!value) {
+        printf("malloc failed\n");
+        exit(-1);
+    }
     strncpy(value,text+index,length-1);
     value[length-1] = 0;
     return value;
+}
+
+int findendingofdefinition (const char * text){
+    int index = 0;
+    while ((text[index] == 9) || (text[index] == 10)) index++;
+    if (text[index] != '#') {
+        printf("Error : No definition part found!!\n");
+        exit(-1);
+    }
+    while (text[index] == '#') {
+        index++;
+        while (text[index] != 10) {
+            index++;
+        }
+        index++;
+    }
+    return index;
+}
+
+int can_passargument_relative_count (const char * text,const char * object, const char * function,int searchfrom) {
+    char * arguments = getarguments(text,function);
+    char * type = findouttype(text,object);
+    char * pointertype = addstring(type,"*");
+    int index = searchfromto(arguments,pointertype,0,strlen(arguments));
+    int i = index;
+    int count = 1;
+    while (i >= 0) {
+        if (arguments[i] == ',') count++;
+        i--;
+    }
+    free(arguments);
+    free(type);
+    free(pointertype);
+    return count;
+}
+
+int getlineindex (const char * text, int index){
+    int i = index;
+    while (text[i] != ';' && text[i] != '{') {
+        i--;
+    }
+    i++;
+    return i;
+}
+
+char * create_functioncall_relative (const char * text,const char * object,const char * function, int searchfrom){/*
+    char * searchtemp = addstring(object,".");
+    char search = addstring(searchtemp,function);
+    free(searchtemp);
+    int index = searchfromto(text,search,searchfrom,strlen(text));
+    free(search);
+    index = getlineindex(index);
+    char * line = getlinebyindex(text,index);
+    removewhitespace(&line);
+    int removeto = 0;
+    while (text[removeto] != '.') {
+        removeto++;
+        if (removeto == strlen(line)){
+            printf("Error");
+            exit(-1);
+        }
+    }
+    removefromstring(&line,0,removeto);
+    int argumentcount = can_passagument_relative_count*/
+}
+
+void removefromstring (char ** text,int removefrom,int removeto) {
+    int length = strlen(*text)-(removeto-removefrom)+1;
+    char * value = malloc(length*sizeof(char));
+    if (value == NULL) {
+        printf("malloc failed\n");
+        exit(-1);
+    }
+    int count = 0;
+    for (int i = 0; i <= removefrom; i++) {
+        value[count] = (*text)[i];
+        count++;
+    }
+    for (int i = removeto; i <= strlen(*text); i++) {
+        value[count] = (*text)[i];
+        count++;
+    }
+    *text = value;
+}
+
+void passargumentinline(char ** text,const char * object,int argumentcount){
+    int startindex = 0;
+    while ((*text)[startindex] != '(') {
+        startindex++;
+    }
+    startindex++;
+    char * function = malloc((startindex-1)*sizeof(char));
+    strncpy(function,*text,startindex-2);
+    function[startindex-1] = 0;
+    int endindex = startindex;
+    while ((*text)[endindex] != ')') endindex++;
+    endindex--;
+    int argumentamount = getarguments_amount(*text,function);
+    free(function);
+    char * useobject;
+    if (argumentamount != argumentcount) {
+        useobject = addstring(object,',');
+    }
+    else {
+        useobject = malloc((strlen(object)+1)*sizeof(char));
+        strcpy(useobject,object);
+        useobject[strlen(object)+1] = 0;
+    }
+    int wheretoput = startindex;
+    int count = 1;
+    while (wheretoput <= endindex && count < argumentcount) {
+        if ((*text)[wheretoput] == ',') count++;
+        wheretoput++;
+    }
+    replaceintext (text,useobject,wheretoput,wheretoput);
+    free(useobject);
 }
 
