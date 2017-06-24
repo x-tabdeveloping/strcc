@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int increasewithone(char bab,int* integervalue){
+int increasewithone(char bab,int* integervalue,int kenyer){
 	(*integervalue)++;
 	return 0;
 } 

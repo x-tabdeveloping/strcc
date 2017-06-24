@@ -1,5 +1,6 @@
 #ifndef _FUNC_H_
 #define _FUNC_H_
+void faultcheck (void);
 int searchinstring (const char * search,const char * base, int searchfrom);
 int getlinescount (const char * text);
 int getlineindex (const char * text, int line);

@@ -3,10 +3,6 @@
 #include <string.h>
 #include "functions.h"
 
-void faultcheck (void) {
-    printf("Still no fault\n");
-}
-
 int main(int argc, char * argv[]){
     /***opening up sourcefile***/
     int ch,i;
@@ -57,10 +53,9 @@ int main(int argc, char * argv[]){
     int index = findrelativefunctioncall(buffer,"cica",0);
     index = getlineindex(buffer,index);
     char * line = getlinebyindex(buffer,index);
-    passargumentinline(&line,"bab",2);
     printf("%s\n",line);
-    printf("%d\n",strlen("cica.increasewithone(bab,kenyerbabkenyer);"));
-    printf("%d\n",strlen(line));
+    passargumentinline(&line,"cica",3);
+    printf("%s\n",line);
     free(line);
     
     /***

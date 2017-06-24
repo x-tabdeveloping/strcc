@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void faultcheck (void) {
+    printf("Still no fault\n");
+}
 
 int searchinstring (const char * search,const char * base, int searchfrom) {
     int count = 0;
@@ -95,13 +98,50 @@ int replaceintext(char **text, const char * replacewith,  int beginindex, int en
     char * value = malloc((strlen(firstportion)+strlen(secondportion)+strlen(replacewith)+1)+sizeof(char));
     if (value == NULL) {return -1;}
     value[0] = 0;
-    printf("%s\n",firstportion);
-    printf("%s\n",replacewith);
-    printf("%s\n",secondportion);
+    /*printf("firstportion : %s\n",firstportion);
+    printf("replacewith : %s\n",replacewith);
+    printf("secondportion : %s\n",secondportion);*/
     strcpy(value,firstportion);
     strcat(value,replacewith);
     strcat(value,secondportion);
     value[strlen(firstportion)+strlen(secondportion)+strlen(replacewith)+1] = 0;
+    free(*text);
+    *text = value;
+    return 0;
+}
+int placeintext(char ** text,const char * object, int index) {
+    char * firstportion = malloc((index+1) * sizeof(char));
+    int secondlength = strlen(*text) - index + 1;
+    char * secondportion = malloc(secondlength * sizeof(char));
+    strncpy(firstportion,(*text),index);
+    firstportion[index+1] = 0;
+    strncpy(secondportion,(*text)+index+1,secondlength-1);
+    secondportion[secondlength] = 0;
+    int length = strlen(secondportion)+strlen(firstportion)+strlen(object)+1;
+    char * value = malloc(length * sizeof(char));
+    strcpy(value,firstportion);
+    strcat(value,object);
+    strcat(value,secondportion);
+    value[length-1] = 0;
+    free(*text);
+    *text = value;
+    return 0;
+}
+
+int placeintextonlywhenfirst (char ** text,const char * object, int index){
+    char * firstportion = malloc((index+1) * sizeof(char));
+    int secondlength = strlen(*text) - index + 1;
+    char * secondportion = malloc(secondlength * sizeof(char));
+    strncpy(firstportion,(*text),index);
+    firstportion[index+1] = 0;
+    strncpy(secondportion,(*text)+index,secondlength-1);
+    secondportion[secondlength] = 0;
+    int length = strlen(secondportion)+strlen(firstportion)+strlen(object)+1;
+    char * value = malloc(length * sizeof(char));
+    strcpy(value,firstportion);
+    strcat(value,object);
+    strcat(value,secondportion);
+    value[length-1] = 0;
     free(*text);
     *text = value;
     return 0;
@@ -150,6 +190,8 @@ char * getarguments (const char * text, const char * function) {
 
 int getarguments_amount (const char * text, const char * function) {
     char * temporary = getarguments(text,function);
+    /*printf("func : %s\n",function);
+    printf("temporary : %s\n",temporary);*/
     int count = 1;
     for (int i = 0; i <= strlen(temporary);i++) {
         if (temporary[i] == ',') count++;
@@ -464,21 +506,22 @@ void passargumentinline(char ** text,const char * object,int argumentcount){
     int argumentamount = getarguments_amount(*text,function);
     free(function);
     char * useobject;
-    if (argumentamount != argumentcount) {
-        useobject = addstring(object,',');
+    if (argumentamount+1 != argumentcount) {
+        useobject = addstring(object,",");
     }
     else {
-        useobject = malloc((strlen(object)+1)*sizeof(char));
-        strcpy(useobject,object);
-        useobject[strlen(object)+1] = 0;
+        useobject = addstring(",",object);
     }
-    int wheretoput = startindex;
+    int wheretoput = startindex+1;
     int count = 1;
     while (wheretoput <= endindex && count < argumentcount) {
         if ((*text)[wheretoput] == ',') count++;
         wheretoput++;
     }
-    replaceintext (text,useobject,wheretoput,wheretoput);
+    wheretoput--;
+    if (argumentcount == 1) placeintextonlywhenfirst(text,useobject,wheretoput); else
+    placeintext (text,useobject,wheretoput);
+    removewhitespace(text);
     free(useobject);
 }
 
