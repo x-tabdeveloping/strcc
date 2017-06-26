@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "constants.h"
 
 void faultcheck (void) {
     printf("Still no fault\n");
@@ -320,40 +321,8 @@ int removespace (char ** text) {
     return 0;
 }
 
-char * findouttype (const char * text, const char * object) {
-    int index = searchinstring(object,text,0);
-    int i = index;
-    /*while ((text[i] == ' ') || (text[i] == 9) || (text[i] == 10)) {
-        i--;
-    }*/
-    //if (index == i) return NULL;
-    //int newindex = i;
-    while ((text[i] != ' ') && (text[i] != 9) && (text[i] != 10)) {
-        i--;
-    }
-    int newindex = i;
-    while ((text[i] == ' ') || (text[i] == 9) || (text[i] == 10)) {
-        i--;
-    }
-    while ((text[i] != ';') && (text[i] != '{')) {
-        i--;
-    }
-    i++;
-    char * type = malloc((newindex - i /*+ 1*/)*sizeof(char));
-    int count = 0;
-    while (i<=newindex) {
-        type[count] = text [i];
-        i++; count++;
-    }
-    type[count] = 0;
-    int check = removewhitespace(&type);
-    if (check == -1) return NULL;
-    check = removespace(&type);
-    if (check == -1) return NULL;
-    return type;
-}
 
-int writetype (const char * text,const char * object) {
+/*int writetype (const char * text,const char * object) {
     char * towrite = findouttype(text,object);
     if (towrite == NULL) {
         printf("Failed to write type\n");
@@ -361,7 +330,7 @@ int writetype (const char * text,const char * object) {
         }
     printf("%s\n",towrite);
     free(towrite);
-}
+}*/
 
 char * addstring (const char * text, const char * addition) {
     int length = (strlen(text) + strlen(addition) + 1);
@@ -425,7 +394,7 @@ int findendingofdefinition (const char * text){
     return index;
 }
 
-int can_passargument_relative_count (const char * text,const char * object, const char * function,int searchfrom) {
+/*int can_passargument_relative_count (const char * text,const char * object, const char * function,int searchfrom) {
     char * arguments = getarguments(text,function);
     char * type = findouttype(text,object);
     char * pointertype = addstring(type,"*");
@@ -440,7 +409,7 @@ int can_passargument_relative_count (const char * text,const char * object, cons
     free(type);
     free(pointertype);
     return count;
-}
+}*/
 
 int getlineindex (const char * text, int index){
     int i = index;
@@ -451,25 +420,27 @@ int getlineindex (const char * text, int index){
     return i;
 }
 
-char * create_functioncall_relative (const char * text,const char * object,const char * function, int searchfrom){/*
-    char * searchtemp = addstring(object,".");
-    char search = addstring(searchtemp,function);
-    free(searchtemp);
-    int index = searchfromto(text,search,searchfrom,strlen(text));
-    free(search);
-    index = getlineindex(index);
+char * findouttype (const char * text, const char * object) {
+    int searchfrom = searchfromto(text,"main(",0,strlen(text));
+    int index = searchfromto(text,object,0,strlen(text));
+    index = getlineindex(text,index);
     char * line = getlinebyindex(text,index);
     removewhitespace(&line);
-    int removeto = 0;
-    while (text[removeto] != '.') {
-        removeto++;
-        if (removeto == strlen(line)){
-            printf("Error");
-            exit(-1);
-        }
+    //printf("%s\n",line);
+    int length = 0;
+    while (line[length] != ' ') {
+        //printf("%c\n",line[length]);
+        length++;
     }
-    removefromstring(&line,0,removeto);
-    int argumentcount = can_passagument_relative_count*/
+    length++;
+    char * type = malloc(length*sizeof(char));
+    strncpy(type,line,length);
+    type[length] = 0;
+    removespace(&type);
+    removewhitespace(&type);
+    //printf("%s\n",type);
+    free(line);
+    return type;
 }
 
 void removefromstring (char ** text,int removefrom,int removeto) {
@@ -480,7 +451,7 @@ void removefromstring (char ** text,int removefrom,int removeto) {
         exit(-1);
     }
     int count = 0;
-    for (int i = 0; i <= removefrom; i++) {
+    for (int i = 0; i < removefrom; i++) {
         value[count] = (*text)[i];
         count++;
     }
@@ -525,3 +496,59 @@ void passargumentinline(char ** text,const char * object,int argumentcount){
     free(useobject);
 }
 
+void passobjectasargumentinline_relative(char ** text,int argumentcount) {
+    removewhitespace(text);
+    int count = 0;
+    while ((*text)[count] != '.') {
+        count++;
+    }
+    char * tempobject = malloc((count+1)*sizeof(char));
+    strncpy(tempobject,(*text),count);
+    tempobject[count+1] = 0;
+    char * object = addstring("&",tempobject);
+    free(tempobject);
+    passargumentinline(text,object,argumentcount);
+    //printf("%s\n",*text);
+    removefromstring (text,0,count+1);
+    free(object);
+}
+
+void create_functioncall_relative (char ** text,int lineindex){
+    char * line = getlinebyindex(*text,lineindex);
+    int i = 0;
+    while(line[i] != '.') i++;
+    char * object = malloc((i+1)*sizeof(char));
+    strncpy(object,line,i);
+    object[i+1] = 0;
+    printf("%s\n",object);
+    int ibackup = i+1;
+    while(line[i] != '(') i++;
+    char * function = malloc((i-ibackup+1)*sizeof(char));
+    strncpy(function,line+ibackup,i-ibackup);
+    function[i-ibackup+1] = 0;
+    printf("%s\n",function);
+    char * temptype = findouttype(*text,object);
+    char * type = addstring(temptype,"*");
+    printf("%s\n",type);
+    free(temptype);
+    char * arguments = getarguments(*text,function);
+    printf("%s\n",arguments);
+    int index = searchfromto(arguments,type,0,strlen(arguments));
+    if (index == -1) {
+        printf(ANSI_COLOR_RED "Error : " ANSI_COLOR_RESET "not matching type" ANSI_COLOR_BLUE " -- relative function call in line :" ANSI_COLOR_RESET" \"%s\"\n",line);
+        exit(-1);
+    }
+    int argumentcount = 1;
+    for (i = index; i>=0; i--) {
+        if (arguments[i] == ',') {
+            argumentcount++;
+        }
+    }
+    passobjectasargumentinline_relative(&line,argumentcount);
+    replaceline(text,lineindex,line);
+    free(line);
+    free(object);
+    free(function);
+    free(type);
+    free(arguments);
+}

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "functions.h"
+#include "constants.h"
 
 int main(int argc, char * argv[]){
     /***opening up sourcefile***/
@@ -52,11 +53,15 @@ int main(int argc, char * argv[]){
     removewhitespacefrom(&buffer,findendingofdefinition(buffer));
     int index = findrelativefunctioncall(buffer,"cica",0);
     index = getlineindex(buffer,index);
-    char * line = getlinebyindex(buffer,index);
+    /*char * line = getlinebyindex(buffer,index);
     printf("%s\n",line);
-    passargumentinline(&line,"cica",3);
+    passobjectasargumentinline_relative(&line,3);
     printf("%s\n",line);
-    free(line);
+    replaceline(&buffer,index,line);
+    free(line);*/
+    
+    create_functioncall_relative (&buffer,index);
+    printf("%s\n",buffer);
     
     /***
     
@@ -65,7 +70,7 @@ int main(int argc, char * argv[]){
     ***/
     
     /***write buffer to temporary.c***/
-    fwrite(buffer,sizeof(char),outputsize,temporaryc);
+    fwrite(buffer,sizeof(char),strlen(buffer),temporaryc);
     /***closing temporary.c***/
     fclose(temporaryc);
     if (buffer == NULL) {

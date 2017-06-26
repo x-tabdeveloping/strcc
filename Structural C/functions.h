@@ -28,6 +28,7 @@ int can_passargument_relative_count (const char * text,const char * object, cons
 int getarguments_amount (const char * text, const char * function);
 int getlineindex (const char * text, int index);
 void removefromstring (char ** text,int removefrom,int removeto);
-char * create_functioncall_relative (const char * text,const char * object,const char * function, int searchfrom);
+void create_functioncall_relative (char ** text,int line);
 void passargumentinline(char ** text,const char * object,int argumentcount);
+void passobjectasargumentinline_relative(char ** text,int argumentcount);
 #endif

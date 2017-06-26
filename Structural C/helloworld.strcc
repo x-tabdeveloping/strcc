@@ -8,6 +8,7 @@ int increasewithone(char bab,int* integervalue,int kenyer){
 int main() {
 	int cica = 0;
 	int kenyer = 1;
+	char bab = 'c';
 	cica.increasewithone(bab,kenyer);
 	printf("%d\n",cica);
 	return 0;
